@@ -11,17 +11,20 @@ import javax.swing.JFrame;
  */
 
 public class PollutionSimulator extends JFrame {
-    static int width = 768;
-    static int height = 480;
-    double mutationFactor = 0.1;
+    static int width = 500;
+    static int height = 400;
+    double mutationFactor = 0.05;
+    double positivity = 0.46;
     double deviation = 0.9;
     double[][] peopleValues = new double[width][height];
     double[][] atmosphericValues = new double[width][height];
     
     public void setInitial(){
+        double lowerBound = 1-(deviation*positivity);
+        double upperBound = 1+(deviation*(1-positivity));
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                peopleValues[i][j] = ThreadLocalRandom.current().nextDouble(1-deviation, 1+deviation);
+                peopleValues[i][j] = ThreadLocalRandom.current().nextDouble(lowerBound, upperBound);
                 atmosphericValues[i][j] = 5;
             }
         }
@@ -65,7 +68,6 @@ public class PollutionSimulator extends JFrame {
         double[][] kernelToApply = {{1, 2, 1},
                                     {2, 4, 2}, 
                                     {1, 2, 1}};
-
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 newAtmosphericValues[i][j] = applyKernel(kernelToApply, i, j, 16, false);
@@ -78,9 +80,6 @@ public class PollutionSimulator extends JFrame {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 atmosphericValues[i][j]*=peopleValues[i][j];
-                if (atmosphericValues[i][j]>255){
-                    atmosphericValues[i][j]=255;
-                }
             }
         }
     }
@@ -107,12 +106,12 @@ public class PollutionSimulator extends JFrame {
         BufferedImage peopleImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         BufferedImage pollutionImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         BufferedImage finalImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        int peopleTrans = 55;
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 int atmosphericValue = (int)Math.round(atmosphericValues[i][j]);
                 if (atmosphericValue>255){
-                    System.out.println(atmosphericValue);
+                    atmosphericValue = 255;
+                    atmosphericValues[i][j] = 255;
                 }
                 Color atmosColor = new Color(0,0,0,atmosphericValue);
 
@@ -145,7 +144,7 @@ public class PollutionSimulator extends JFrame {
         p.setInitial();
         p.setVisible(true);  //Calls paint
         while(true){
-//            Thread.sleep(1000/60);
+            Thread.sleep(1000/60);
             p.nextGeneration();
             p.repaint();
         }
